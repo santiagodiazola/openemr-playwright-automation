@@ -6,10 +6,10 @@ test('Validation: Should show error when fields are left empty', async ({ page }
 
   await page.goto('/openemr/interface/login/login.php?site=default');
 
-  // Action: Click login without filling anything
+  // Action
   await page.click('#login-button'); 
 
-  // Verification: Based on your screenshot
+  // Verification
   const errorAlert = page.getByText('Invalid username or password');
   await expect(errorAlert).toBeVisible();
 });
