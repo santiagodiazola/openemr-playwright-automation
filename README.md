@@ -42,7 +42,6 @@ This project focuses on automating core workflows within OpenEMR, a legacy elect
 
 **Execution Report**
 Proof of a stable, 100% pass rate across the specialized test suite.
-
 **Trace Viewer Debugging**
 I utilize the Playwright Trace Viewer as my primary diagnostic tool. This allows for a frame-by-frame post-mortem analysis of the automation lifecycle, which is essential for debugging complex iframe interactions in healthcare environments.
 
