@@ -1,15 +1,9 @@
-import { test, expect } from '@playwright/test';
-import { LoginPage } from '../page-objects/LoginPage';
+import { test, expect } from '../fixtures/page-fixtures';
 
-test('Validation: Should show error when fields are left empty', async ({ page }) => {
-  const loginPage = new LoginPage(page);
-
-  await page.goto('/openemr/interface/login/login.php?site=default');
-
-  // Action
-  await page.click('#login-button'); 
-
-  // Verification
-  const errorAlert = page.getByText('Invalid username or password');
-  await expect(errorAlert).toBeVisible();
+test.describe('Negative Authentication Tests', () => {
+  test('Validation: Should show error when fields are left empty', async ({ loginPage }) => {
+    await loginPage.goto();
+    await loginPage.loginButton.click();
+    await expect(loginPage.errorMessage).toBeVisible();
+  });
 });

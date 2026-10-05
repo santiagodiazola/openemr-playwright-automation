@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 export abstract class BasePage {
   readonly page: Page;
@@ -7,11 +7,11 @@ export abstract class BasePage {
     this.page = page;
   }
 
-  async navigateTo(path: string) {
+  async navigateTo(path: string): Promise<void> {
     await this.page.goto(path);
   }
 
-  async waitForUrlPattern(urlPattern: string | RegExp) {
+  async waitForUrlPattern(urlPattern: string | RegExp): Promise<void> {
     await this.page.waitForURL(urlPattern);
   }
 }
