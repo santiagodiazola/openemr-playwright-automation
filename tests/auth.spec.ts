@@ -1,25 +1,15 @@
-import { test, expect } from '@playwright/test';
-import { LoginPage } from '../page-objects/LoginPage';
-import { PatientPage } from '../page-objects/PatientPage';
+import { test, expect } from '../fixtures/page-fixtures';
 
-test('User should login and retrieve patient list', async ({ page }) => {
-  const loginPage = new LoginPage(page);
-  const patientPage = new PatientPage(page);
-
+test('User should login and retrieve patient list', async ({ loginPage, patientPage }) => {
   // 1. Setup
-  await page.goto('/openemr/interface/login/login.php?site=default');
+  await loginPage.goto();
   await loginPage.login('physician', 'physician');
-  await page.waitForURL('**/interface/main/tabs/main.php**');
+  await loginPage.waitForUrlPattern('**/interface/main/tabs/main.php**');
 
   // 2. Action
   await patientPage.goToPatientFinder();
-  
-  await patientPage.searchAndGetPatientList(); 
+  await patientPage.searchAndGetPatientList();
 
- // 3. Verification
-const searchResultsFrame = page.frameLocator('iframe[src*="patient_select.php"]');
-
-const patientName = searchResultsFrame.getByText(/Belford/i);
-
-await expect(patientName.first()).toBeVisible();
+  // 3. Verification
+  await expect(patientPage.getPatientByName(/Belford/i).first()).toBeVisible();
 });

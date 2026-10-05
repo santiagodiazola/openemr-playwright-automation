@@ -1,10 +1,12 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, Locator, FrameLocator } from '@playwright/test';
+import { BasePage } from './BasePage';
 
-export class PatientPage {
-  readonly page: Page;
+export class PatientPage extends BasePage {
+  readonly searchResultsFrame: FrameLocator;
 
-  constructor(page: Page) {
-    this.page = page;
+constructor(page: Page) {
+    super(page);
+    this.searchResultsFrame = page.frameLocator('iframe[src*="patient_select.php"]');
   }
 
 async goToPatientFinder() {
@@ -24,5 +26,10 @@ async searchAndGetPatientList() {
     await patientFrame.locator('button#search').evaluate((node) => {
         (node as HTMLElement).click();
     });
+}
+
+// Inside PatientPage.ts
+getPatientByName(name: string | RegExp): Locator {
+  return this.searchResultsFrame.getByText(name);
 }
 }
