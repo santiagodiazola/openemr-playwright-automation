@@ -8,49 +8,59 @@ on:
 
 jobs:
   test:
-    timeout-minutes: 15
+    name: End-to-End & API Test Suite
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    timeout-minutes: 15
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "npm"
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install Dependencies
+        run: npm ci
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Start Docker Containers
+      # --- 1. Infrastructure Orchestration ---
+      - name: Start OpenEMR & MariaDB Containers
         run: docker compose up -d
 
-      - name: Wait for OpenEMR Initialization
+      # --- 2. Container Health Verification ---
+      - name: Wait for OpenEMR Web Service
         run: |
-          echo "Waiting for MariaDB and OpenEMR containers to initialize..."
-          sleep 60
-          for i in {1..20}; do
-            if curl -s -L http://localhost:8300/ | grep -q "OpenEMR"; then
-              echo "OpenEMR is fully initialized and responding!"
+          echo "Waiting for OpenEMR container stack to fully initialize..."
+          for i in {1..30}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8300/ || true)
+            if [ "$STATUS" -eq 200 ] || [ "$STATUS" -eq 302 ]; then
+              echo "OpenEMR is online and returning HTTP $STATUS!"
               exit 0
             fi
-            echo "Waiting for OpenEMR web service... ($i/20)"
+            echo "Attempt $i/30: Server returned HTTP $STATUS. Retrying in 10s..."
             sleep 10
           done
-          echo "OpenEMR failed to initialize within time limit."
+          echo "OpenEMR failed to start in time."
+          docker compose logs
           exit 1
 
-      - name: Run Playwright Tests
+      # --- 3. Test Execution ---
+      - name: Execute Playwright Suite
         run: npx playwright test
         env:
           BASE_URL: "http://localhost:8300/"
 
-      - name: Stop Docker Containers
+      # --- 4. Cleanup & Artifact Retention ---
+      - name: Tear Down Docker Stack
         if: ${{ always() }}
         run: docker compose down -v
 
-      - name: Upload Test Report Artifact
+      - name: Upload Playwright HTML Report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
