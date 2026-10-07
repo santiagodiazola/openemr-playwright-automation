@@ -26,18 +26,19 @@ jobs:
       - name: Start Docker Containers
         run: docker compose up -d
 
-      - name: Wait for OpenEMR Service Readiness
+      - name: Wait for OpenEMR Initialization
         run: |
-          echo "Waiting for OpenEMR container to respond..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8300/ > /dev/null; then
-              echo "OpenEMR is up and healthy!"
+          echo "Waiting for MariaDB and OpenEMR containers to initialize..."
+          sleep 60
+          for i in {1..20}; do
+            if curl -s -L http://localhost:8300/ | grep -q "OpenEMR"; then
+              echo "OpenEMR is fully initialized and responding!"
               exit 0
             fi
-            echo "Waiting..."
-            sleep 5
+            echo "Waiting for OpenEMR web service... ($i/20)"
+            sleep 10
           done
-          echo "OpenEMR failed to start in time."
+          echo "OpenEMR failed to initialize within time limit."
           exit 1
 
       - name: Run Playwright Tests
