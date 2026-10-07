@@ -24,8 +24,19 @@ jobs:
       - name: Install Playwright Browsers & OS Dependencies
         run: npx playwright install --with-deps chromium
 
+      # 1. Spin up OpenEMR & MariaDB in CI
+      - name: Start Docker Containers
+        run: docker compose up -d
+
+      # 2. Wait for OpenEMR to respond
+      - name: Wait for OpenEMR
+        run: npx wait-on http://localhost:8300/ --timeout 60000
+
+      # 3. Run Playwright against local Docker instance
       - name: Run Playwright tests
         run: npx playwright test
+        env:
+          BASE_URL: "http://localhost:8300/"
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
