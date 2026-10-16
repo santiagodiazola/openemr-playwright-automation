@@ -39,7 +39,9 @@ jobs:
           for i in {1..30}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8300/ || true)
             if [ "$STATUS" -eq 200 ] || [ "$STATUS" -eq 302 ]; then
-              echo "OpenEMR is online and returning HTTP $STATUS!"
+              echo "OpenEMR web port is open (HTTP $STATUS). Waiting an extra 30s for PHP and DB migrations to complete..."
+              sleep 30
+              echo "OpenEMR should now be fully initialized!"
               exit 0
             fi
             echo "Attempt $i/30: Server returned HTTP $STATUS. Retrying in 10s..."
