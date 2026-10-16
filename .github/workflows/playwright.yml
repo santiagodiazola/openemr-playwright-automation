@@ -36,18 +36,20 @@ jobs:
       - name: Wait for OpenEMR Web Service
         run: |
           echo "Waiting for OpenEMR container stack to fully initialize..."
+
+          # Esperar hasta 5 minutos (30 intentos x 10 segundos) leyendo los logs del contenedor
           for i in {1..30}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8300/ || true)
-            if [ "$STATUS" -eq 200 ] || [ "$STATUS" -eq 302 ]; then
-              echo "OpenEMR web port is open (HTTP $STATUS). Waiting an extra 30s for PHP and DB migrations to complete..."
-              sleep 30
-              echo "OpenEMR should now be fully initialized!"
+            if docker logs openemr_app 2>&1 | grep -q "Starting apache!"; then
+              echo "OpenEMR setup is complete and Apache has started!"
+              echo "Giving PHP 20 extra seconds to stabilize..."
+              sleep 20
               exit 0
             fi
-            echo "Attempt $i/30: Server returned HTTP $STATUS. Retrying in 10s..."
+            echo "Attempt $i/30: OpenEMR is still initializing database/PHP... retrying in 10s"
             sleep 10
           done
-          echo "OpenEMR failed to start in time."
+
+          echo "Timeout: OpenEMR did not start in time."
           docker compose logs
           exit 1
 
