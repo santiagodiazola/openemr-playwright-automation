@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   mysql:
     image: mariadb:10.11
@@ -8,6 +6,12 @@ services:
       MYSQL_ROOT_PASSWORD: root
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   openemr:
     image: openemr/openemr:7.0.2
@@ -20,7 +24,8 @@ services:
       OE_USER: admin
       OE_PASS: pass
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
 
 volumes:
   db_data:

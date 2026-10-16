@@ -7,7 +7,6 @@ pipeline {
     }
 
     environment {
-        // Points Playwright tests to the local Dockerized OpenEMR instance
         BASE_URL = 'http://localhost:8300/'
     }
 
@@ -16,22 +15,31 @@ pipeline {
             steps {
                 echo 'Starting MariaDB and OpenEMR containers...'
                 sh 'docker-compose up -d'
-                echo 'Waiting for services to initialize...'
-                sh 'sleep 30'
+                
+                echo 'Waiting for OpenEMR Web Server to respond on port 8300...'
+                // Wait up to 120 seconds until OpenEMR responds with HTTP 200/302
+                sh '''
+                  timeout 120s bash -c '
+                    until curl -s -f http://localhost:8300/ > /dev/null; do
+                      echo "OpenEMR is still initializing..."
+                      sleep 5
+                    done
+                  '
+                '''
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 echo 'Installing npm dependencies inside Playwright Docker container...'
-                sh 'docker run --rm -v $PWD:/app -w /app mcr.microsoft.com/playwright:v1.40.0-focal npm ci'
+                sh 'docker run --rm -v $PWD:/app -w /app mcr.microsoft.com/playwright:v1.48.0-noble npm ci'
             }
         }
 
         stage('Execute Playwright Tests') {
             steps {
                 echo 'Running Playwright test suite against local OpenEMR...'
-                sh 'docker run --rm --network host -e BASE_URL=${BASE_URL} -v $PWD:/app -w /app mcr.microsoft.com/playwright:v1.40.0-focal npx playwright test'
+                sh 'docker run --rm --network host -e BASE_URL=${BASE_URL} -v $PWD:/app -w /app mcr.microsoft.com/playwright:v1.48.0-noble npx playwright test'
             }
         }
     }
